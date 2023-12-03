@@ -36,30 +36,35 @@ let ListMyProductsComponent = () => {
     }
 
     let getMyProducts = async () => {
-        let response = await fetch(
-            process.env.REACT_APP_BACKEND_BASE_URL+"/products/own/",
-            {
-                method: "GET",
-                headers: {
-                    "apikey": localStorage.getItem("apiKey")
-                },
-            });
+        try {
+            let response = await fetch(
+                process.env.REACT_APP_BACKEND_BASE_URL+"/products/own/",
+                {
+                    method: "GET",
+                    headers: {
+                        "apikey": localStorage.getItem("apiKey")
+                    },
+                }
+            );
 
-        if ( response.ok ){
-            let jsonData = await response.json();
-            jsonData.map( product => {
-                product.key = product.id
-                return product
-            })
-            setProducts(jsonData)
-        } else {
-            let responseBody = await response.json();
-            let serverErrors = responseBody.errors;
-            serverErrors.forEach( e => {
-                console.log("Error: "+e.msg)
-            })
+            if (response.ok) {
+                let jsonData = await response.json();
+                jsonData = jsonData.map(product => ({ ...product, key: product.id }));
+                setProducts(jsonData);
+            } else {
+                // Manejar respuesta no exitosa (como 404, 500, etc.)
+                let responseBody = await response.json();
+                let serverErrors = responseBody.errors;
+                serverErrors.forEach(e => {
+                    console.log("Error: " + e.msg);
+                });
+            }
+        } catch (error) {
+            // Manejar errores de red o problemas al ejecutar fetch
+            console.error("Error al obtener productos: ", error);
         }
-    }
+    };
+
 
     let columns = [
         {
@@ -85,7 +90,14 @@ let ListMyProductsComponent = () => {
         {
             title: "Date",
             dataIndex: "date",
-            render: (date) => timestampToString(date)
+            key: "date",
+            render: (text, record) => {
+                const date = new Date(record.date);
+                const dia = String(date.getDate()).padStart(2, '0');
+                const mes = String(date.getMonth() + 1).padStart(2, '0');
+                const anio = date.getFullYear();
+                return <span>{`${dia}/${mes}/${anio}`}</span>;
+            }
         },
         {
             title: "Buyer",
@@ -105,7 +117,9 @@ let ListMyProductsComponent = () => {
     ]
 
     return (
+        <div style={{padding: "20px 50px"}}>
         <Table columns={columns} dataSource={products}></Table>
+        </div>
     )
 }
 

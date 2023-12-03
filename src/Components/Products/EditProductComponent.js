@@ -66,6 +66,8 @@ let EditProductComponent = () => {
 
     const dateFormat = 'YYYY/MM/DD';
     return (
+        <div style={{padding: "20px 50px"}}>
+
         <Row align="middle" justify="center" style={{ minHeight: "70vh"}}>
             <Col>
                 <Card title="Edit product" style={{ width: "500px"}}>
@@ -107,6 +109,7 @@ let EditProductComponent = () => {
                 </Card>
             </Col>
         </Row>
+        </div>
     )
 }
 

@@ -1,0 +1,7 @@
+/* In styles.css */
+.custom-hover:hover, .custom-hover:focus {
+    color: #385ef9!important;
+    border-color: #fff!important;
+    background-color: #fff!important;
+
+}
