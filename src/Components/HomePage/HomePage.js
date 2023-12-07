@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
-import styles from "../../style.css";
+import { useState, useEffect, useRef,useCallback } from "react";
+
 import { Link } from "react-router-dom";
 import { Card, Col, Row, Typography, Button, FloatButton, Carousel } from 'antd';
+import { useNavigate} from "react-router-dom"
 import {
     ShopOutlined,
     LeftOutlined,
@@ -46,11 +47,17 @@ let HomePage = () => {
         { name: 'Audio', icon: <AudioOutlined />, count: 0 },
         { name: 'Camping', icon: <CompassOutlined />, count: 0 },
     ]);
+    let navigate = useNavigate();
+
     useEffect(() => {
-        // Fetch products and category counts when the component mounts
-        getProducts();
-        getCounts(); // Ensure this is called within useEffect
-    }, []);
+        const apiKey = localStorage.getItem("apiKey");
+        if (!apiKey) {
+            // Si no existe apiKey en el localStorage, redirige a la página de login
+            navigate('/login');
+        }
+    }, [navigate]); // Dependencias del useEffect
+
+
 
     const updateCategoryCounts = (categoriesList, countsData) => {
         return categoriesList.map(category => {
@@ -85,16 +92,17 @@ let HomePage = () => {
 
 
 
-    let checkImageURL = async (image_name) => {
+    let checkImageURL = useCallback(async (image_name) => {
         let urlImage = `${process.env.REACT_APP_BACKEND_BASE_URL}/images/${image_name}`;
         if (await checkURL(urlImage)) {
             return urlImage;
         }
         return "/imageMockup.png"; // Fallback image if none found
-    };
+    }, []);
 
 
-    const getCounts = async () => {
+
+    const getCounts = useCallback(async () => {
         try {
             const response = await fetch(`${process.env.REACT_APP_BACKEND_BASE_URL}/products/categories/count`, {
                 headers: {
@@ -117,17 +125,21 @@ let HomePage = () => {
         } catch (error) {
             console.error("There was a problem with the fetch operation:", error);
         }
-    };
+    }, [categoriesSectionList]);
 
-    let getProducts = async () => {
-        let response = await fetch(process.env.REACT_APP_BACKEND_BASE_URL + "/products", {
-            method: "GET",
-            headers: {
-                "apikey": localStorage.getItem("apiKey")
-            },
-        });
+    let getProducts = useCallback( async () => {
+        try {
+            let response = await fetch(process.env.REACT_APP_BACKEND_BASE_URL + "/products", {
+                method: "GET",
+                headers: {
+                    "apikey": localStorage.getItem("apiKey")
+                },
+            });
 
-        if (response.ok) {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
             let jsonData = await response.json();
             let promisesForImages = jsonData.map(async product => {
                 product.image = await checkImageURL(product.image);
@@ -137,31 +149,39 @@ let HomePage = () => {
             let productsWithImage = await Promise.all(promisesForImages);
             setProducts(productsWithImage); // Set the products state here
 
-
             let groupedByCategory = productsWithImage.reduce((acc, product) => {
                 acc[product.category] = acc[product.category] || [];
                 acc[product.category].push(product);
                 return acc;
             }, {});
+
             getCounts();
             setCategories(groupedByCategory);
-        } else {
-            let responseBody = await response.json();
-            let serverErrors = responseBody.errors;
-            serverErrors.forEach(e => {
-                console.log("Error: " + e.msg)
-            })
+
+        } catch (error) {
+            // Manejo de errores
+            console.error("There was a problem with the fetch operation:", error);
+            // Aquí puedes manejar los errores de manera más específica si lo necesitas
         }
-    };
+    },[getCounts, checkImageURL]);
+
     let checkURL = async (url) => {
         try {
             let response = await fetch(url);
-            console.log(response.ok)
+
             return response.ok; // Returns true if the status is in the 200-299 range.
         } catch (error) {
             return false; // URL does not exist or there was an error.
         }
     }
+
+
+    useEffect(() => {
+
+        // Fetch products and category counts when the component mounts
+        getProducts();
+        getCounts(); // Ensure this is called within useEffect
+    }, [getProducts, getCounts]);
 
 
     const chunkSize = 4;

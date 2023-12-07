@@ -11,7 +11,6 @@ import {
 } from "../../Utils/UtilsValidations"
 
 let LoginFormComponent = (props) => {
-
     let {setLogin, openNotification} = props
     let navigate = useNavigate();
     const [form] = Form.useForm();

@@ -19,13 +19,13 @@ import {
     Row,
     notification,
     ConfigProvider,
-    theme,
+
     Dropdown,
     Button,
-    Space
+
 } from 'antd';
 
-import {FireOutlined, LoginOutlined, UserOutlined, LogoutOutlined, DownOutlined,CreditCardOutlined} from '@ant-design/icons';
+import { LoginOutlined, UserOutlined, LogoutOutlined, DownOutlined} from '@ant-design/icons';
 import {useEffect, useState} from "react";
 
 let App = () => {
@@ -35,7 +35,7 @@ let App = () => {
 
     let navigate = useNavigate();
     let location = useLocation();
-    const [buttonConfig, setButtonConfig] = useState({label: 'Sign in', icon: <LoginOutlined/>, path: '/'});
+    const [buttonConfig, setButtonConfig] = useState({label: 'Sign in', icon: <LoginOutlined/>, path: '/login'});
 
 
     let [login, setLogin] = useState(false);
@@ -66,6 +66,8 @@ let App = () => {
             return;
         }
 
+
+
         let response = await fetch(
             process.env.REACT_APP_BACKEND_BASE_URL + "/users/isActiveApiKey",
             {
@@ -92,9 +94,16 @@ let App = () => {
 
     let checkUserAccess = async (isActive) => {
         let href = location.pathname;
+
+        if (!isActive && href === "/") {
+            navigate("/login");
+        }
+
+
         if (!isActive && !["/", "/login", "/register"].includes(href)) {
             navigate("/login")
         }
+
         if (isActive && ["/login", "/register"].includes(href)) {
             navigate("/products")
         }
@@ -128,7 +137,7 @@ let App = () => {
                 setButtonConfig({label: 'Login', icon: <UserOutlined/>, path: '/login'});
                 break;
             default:
-                setButtonConfig({label: 'Sign in', icon: <LoginOutlined/>, path: '/'});
+                setButtonConfig({label: 'Sign in', icon: <LoginOutlined/>, path: '/login'});
         }
     }, [location]);
 
